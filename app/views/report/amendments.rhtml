@@ -1,0 +1,25 @@
+"REPRESENTATIVES (<%= @bills.first.congress.number.ordinalize %>)"<% for amendment in @amendments -%>,"H.AMDT.<%= amendment.name %>"<% end -%>
+
+"Passed"<% for amendment in @amendments -%>,"<%= "1" if amendment.passed %>"<% end -%>
+
+"Bill"<% for amendment in @amendments -%>,"H.R.<%= amendment.bill.name %>"<% end -%>
+
+<% for rep in @representatives -%>
+"<%= rep.last_name %>, <%= rep.first_name %>"<% for amendment in @amendments -%>,"<%= if rep == amendment.sponsor then "1" end %>"<% end -%>
+
+<% end -%>
+<% for committee in @sponsoring_committees -%>
+"<%= committee.name %>"<% for amendment in @amendments -%>,"<%= if committee == amendment.sponsor then "1" end %>"<% end -%>
+
+<% end -%>
+"COMMITTEES"
+<% for committee in @committees -%>
+"<%= committee.name %>"<% for amendment in @amendments -%>,"<%= if amendment.bill.committees.include?(committee) then "1" end %>"<% end -%>
+
+<% end -%>
+"SUBCOMMITTEES"
+<% for subcommittee in @subcommittees -%>
+"<%= subcommittee.name %>"<% for amendment in @amendments -%>,"<%= if amendment.bill.subcommittees.include?(subcommittee) then "1" end %>"<% end -%>
+
+<% end -%>
+<%= render :partial => 'bill' %>

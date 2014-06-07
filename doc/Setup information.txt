@@ -1,0 +1,40 @@
+****************************************
+*** Install information/instructions ***
+****************************************
+
+*** Here are the installation instructions. ***
+
+1)  The following link goes to a very helpful tutorial. Instructions for Mac is on page four.
+    http://www.devarticles.com/c/a/Ruby-on-Rails/Installing-Ruby-on-Rails/
+		
+4)  Open a console or terminal and navigate to Bills' directory.
+
+5)  Type the command 'ruby script/plugin install auto_complete'.
+    If it doesn't work, you may have to modify your environment variables so that the console recognizes the 'ruby' command.
+		
+6)  Type the command 'gem install rubyzip'
+
+7)  Go to http://github.com/masterkain/classic_pagination/tree/master and click the download button.
+    Unzip the contents into [Bill's path]/vendor/plugins
+	  Rename the folder that was created to 'classic_pagination'.
+		
+8)  Start your database software (for MySQL, type the command 'mysql -u root').
+
+9)  Create a database called 'bills_development' (for MySQL, type 'CREATE DATABASE bills_development;')
+
+10) Go back to Bills' directory and type the command 'rake db:migrate'. It should run through migration 30.
+
+*** Everything is installed now! You should be able to run the app. ***
+
+1)  Navigate to Bills' directory and type the command 'ruby script/server'. This will start the server program.
+
+2)  Open your web browser and navigate to 'http://localhost:3000/admin'. You are now using the application!
+
+*****************************************
+*** My notes for debugging the source ***
+*****************************************
+
+- Change '/fetch' in app/views/congress/list:29 to '/congress/fetch'
+- Define method sponsor for Bill as having the value sponsors[0]
+- Change '/tmp/[...]' in app/views/representatives/list to 'tmp/[...]'
+- Change start_form_tag to form_tag

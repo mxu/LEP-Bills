@@ -1,0 +1,38 @@
+<h1>Ranking Phrases</h1>
+
+<% form_tag '/ranking_phrase/new' do -%>
+New Phrase: <%= text_field_tag :phrase, "", :size => 6 %>
+<%= check_box 'rank', 'exception' %> Exception?</ br>
+<%= check_box 'rank', 'regex' %> Regular Expression?</ br>
+<%= submit_tag("Add") %>
+<% end -%>
+
+<table border="1" cellspacing="1" cellpadding="1">
+	<h2>Phrases:</h2>
+	<% RankingPhrase.find_all_by_exception(false).reverse.each do |r| %>
+		<tr>
+			<td><%= link_to 'Remove', :action=>'remove', :id=>r.id %><br />
+			<td><%= r.phrase %>
+		</tr>
+	<% end %>
+</table> <br />
+
+<table border="1" cellspacing="1" cellpadding="1">
+	<h2>Exceptions:</h2>
+	<% RankingPhrase.find_all_by_exception_and_regex(true,false).reverse.each do |r| %>
+		<tr>
+			<td><%= link_to 'Remove', :action=>'remove', :id=>r.id %><br />
+			<td><%= r.phrase %>
+		</tr>
+	<% end %>
+</table> <br />
+
+<table border="1" cellspacing="1" cellpadding="1">
+	<h2>More Exceptions:</h2>
+	<% RankingPhrase.find_all_by_exception_and_regex(true,true).reverse.each do |r| %>
+		<tr>
+			<td><%= link_to 'Remove', :action=>'remove', :id=>r.id %><br />
+			<td><%= r.phrase %>
+		</tr>
+	<% end %>
+</table>

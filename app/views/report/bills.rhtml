@@ -1,0 +1,19 @@
+"REPRESENTATIVES (<%= @bills.first.congress.number.ordinalize %>)"<% for bill in @bills -%>,"H.R.<%= bill.name %>"<% end -%>
+
+"Bill Title"<% for bill in @bills -%>,"<%= bill.title.gsub("\"", "'") %>"<% end -%>
+
+<% for rep in @representatives -%>
+"<%= rep.last_name %>, <%= rep.first_name %>"<% for bill in @bills -%>,"<%= if bill.sponsors.include?(rep) then "1" elsif bill.cosponsors.include?(rep) then "2" end %>"<% end -%>
+
+<% end -%>
+"COMMITTEES"
+<% for committee in @committees -%>
+"<%= committee.name %>"<% for bill in @bills -%>,"<%= if bill.committees.include?(committee) then "1" end %>"<% end -%>
+
+<% end -%>
+"SUBCOMMITTEES"
+<% for subcommittee in @subcommittees -%>
+"<%= subcommittee.name %>"<% for bill in @bills -%>,"<%= if bill.subcommittees.include?(subcommittee) then "1" end %>"<% end -%>
+
+<% end -%>
+<%= render :partial => 'bill' %>

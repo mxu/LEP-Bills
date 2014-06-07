@@ -1,0 +1,8 @@
+<%= error_messages_for 'roll_call' %>
+
+<!--[form:show_roll_call]-->
+<h1>Roll Call <%= roll_call.roll_number %> - <%= roll_call.vote_question unless roll_call.vote_question.nil? %> (<%= "#{yeas.size} - #{nays.size}" %>)</h1>
+<% for vote in roll_call.votes -%>
+  <%= vote.representative.name %> <%= vote.vote %><br />
+<% end -%>
+<!--[eoform:show_roll_call]-->

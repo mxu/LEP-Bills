@@ -1,0 +1,24 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+  <title><%= controller.controller_name %>: <%= controller.action_name %></title>
+  <%= stylesheet_link_tag 'scaffold' %>
+  <%= javascript_include_tag :defaults %>
+</head>
+<body>
+
+<%= link_to_unless_current 'Congresses', :controller => 'congress' %> -  
+<%= link_to_unless_current 'Bills', :controller => 'admin' %> -
+<%= link_to_unless_current 'Representatives', :controller => 'representatives' %> -
+<%= link_to_unless_current 'Ranking Phrases', :controller => 'ranking_phrase' %> -
+<%= link_to_unless_current 'Reports', :controller => 'report' %>
+
+<p style="color: green"><%= flash[:notice] %></p>
+
+<%= yield  %>
+
+</body>
+</html>

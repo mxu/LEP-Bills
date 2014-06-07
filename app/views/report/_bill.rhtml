@@ -1,0 +1,86 @@
+"STATUS STEPS (MAJOR ACTIONS)"
+"Issue Area"<% for bill in @bills -%>,"<%= bill.issue %>"<% end -%>
+
+"Introduced"<% for bill in @bills -%>,"<%= bill.introduced_on %>"<% end -%>
+
+"Referred to Committee"<% for bill in @bills -%>,"<%= bill.referred_to_committee_on %>"<% end -%>
+
+"Committee hearing held"<% for bill in @bills -%>,"<%= bill.committee_hearing_held_on %>"<% end -%>
+
+"Committee markup held"<% for bill in @bills -%>,"<%= bill.committee_markup_held_on %>"<% end -%>
+
+"Reported by Committee"<% for bill in @bills -%>,"<%= bill.reported_by_committee_on %>"<% end -%>
+
+"Referred to Subcommittee"<% for bill in @bills -%>,"<%= bill.referred_to_subcommittee_on %>"<% end -%>
+
+"Subcommittee hearing held"<% for bill in @bills -%>,"<%= bill.subcommittee_hearing_held_on %>"<% end -%>
+
+"Subcommittee markup held"<% for bill in @bills -%>,"<%= bill.subcommittee_markup_held_on %>"<% end -%>
+
+"Forwarded from Subcommittee to Committee"<% for bill in @bills -%>,"<%= bill.forwarded_from_subcommittee_to_committee_on %>"<% end -%>
+
+"Multiple Referrals"<% for bill in @bills -%>,"<%= bill.multiple_referrals %>"<%end -%>
+
+"Action in committee"<% for bill in @bills -%>,"<%= if bill.committee_hearing_held_on or bill.committee_markup_held_on or bill.reported_by_committee_on or bill.subcommittee_hearing_held_on or bill.subcommittee_markup_held_on or bill.forwarded_from_subcommittee_to_committee_on then "1" else "0" end %>"<% end -%>
+
+"Action beyond committee"<% for bill in @bills -%>,"<%= if bill.reported_by_committee_on or bill.rule_reported_on or bill.rules_suspended_on or bill.considered_by_unanimous_consent_on or bill.amendments.size > 0 or bill.passed_house_on or bill.failed_house_on or bill.received_in_senate_on or bill.placed_on_union_calendar_on or bill.placed_on_house_calendar_on or bill.placed_on_private_calendar_on or bill.placed_on_corrections_calendar_on or bill.placed_on_discharge_calendar_on then "1" else "0" end %>"<% end -%>
+
+"Placed on Union Calendar"<% for bill in @bills -%>,"<%= bill.placed_on_union_calendar_on %>"<% end -%>
+
+"Placed on House Calendar"<% for bill in @bills -%>,"<%= bill.placed_on_house_calendar_on %>"<% end -%>
+
+"Placed on Private Calendar"<% for bill in @bills -%>,"<%= bill.placed_on_private_calendar_on %>"<% end -%>
+
+"Placed on Corrections Calendar"<% for bill in @bills -%>,"<%= bill.placed_on_corrections_calendar_on %>"<% end -%>
+
+"Placed on Discharge Calendar"<% for bill in @bills -%>,"<%= bill.placed_on_discharge_calendar_on %>"<% end -%>
+
+"Placed on Consent Calendar"<% for bill in @bills -%>,"<%= bill.placed_on_consent_calendar_on %>"<% end -%>
+
+"Placed on Senate Legislative Calendar"<% for bill in @bills -%>,"<%= bill.placed_on_senate_legislative_calendar_on %>"<% end -%>
+
+"Rules reported"<% for bill in @bills -%>,"<%= bill.rule_reported_on %>"<% end -%>
+
+"Rules passed"<% for bill in @bills -%>,"<%= bill.rule_passed_on %>"<% end -%>
+
+"Rules suspended"<% for bill in @bills -%>,"<%= bill.rules_suspended_on %>"<% end -%>
+
+"Considered by unanimous consent"<% for bill in @bills -%>,"<%= bill.considered_by_unanimous_consent_on %>"<% end -%>
+
+"Amendments offered"<% for bill in @bills -%>,"<%= bill.amendments.size %>"<% end -%>
+
+"Amendments passed"<% for bill in @bills -%>,"<%= bill.passed_amendments.size %>"<% end -%>
+
+"Passed House"<% for bill in @bills -%>,"<%= bill.passed_house_on %>"<% end -%>
+
+"Failed House"<% for bill in @bills -%>,"<%= bill.failed_house_on %>"<% end -%>
+
+"Received in Senate"<% for bill in @bills -%>,"<%= bill.received_in_senate_on %>"<% end -%>
+
+"Passed Senate"<% for bill in @bills -%>,"<%= bill.passed_senate_on %>"<% end -%>
+
+"Failed Senate"<% for bill in @bills -%>,"<%= bill.failed_senate_on %>"<% end -%>
+
+"Sent to conference committee"<% for bill in @bills -%>,"<%= bill.sent_to_conference_committee_on %>"<% end -%>
+
+"Conference committee report issued"<% for bill in @bills -%>,"<%= bill.conference_committee_report_issued_on %>"<% end -%>
+
+"Conference committee report passed House"<% for bill in @bills -%>,"<%= bill.conference_committee_passed_house_on %>"<% end -%>
+
+"Conference committee report passed Senate"<% for bill in @bills -%>,"<%= bill.conference_committee_passed_senate_on %>"<% end -%>
+
+"Presented to President"<% for bill in @bills -%>,"<%= bill.presented_to_president_on %>"<% end -%>
+
+"Signed by President"<% for bill in @bills -%>,"<%= bill.signed_by_president_on %>"<% end -%>
+
+"Vetoed by President"<% for bill in @bills -%>,"<%= bill.vetoed_by_president_on %>"<% end -%>
+
+"House veto override successful"<% for bill in @bills -%>,"<%= bill.house_veto_override_on %>"<% end -%>
+
+"Senate veto override successful"<% for bill in @bills -%>,"<%= bill.senate_veto_override_on %>"<% end -%>
+
+"House veto override failed"<% for bill in @bills -%>,"<%= bill.house_veto_override_failed_on %>"<% end -%>
+
+"Senate veto override failed"<% for bill in @bills -%>,"<%= bill.senate_veto_override_failed_on %>"<% end -%>
+
+"Became law"<% for bill in @bills -%>,"<%= bill.became_law_on %>"<% end -%>

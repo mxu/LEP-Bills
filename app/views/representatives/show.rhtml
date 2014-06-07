@@ -1,0 +1,19 @@
+<h3><%= @representative.name %></h3>
+
+<% if @representative.bills.size > 0 %>
+Sponsored Bills: <%= "#{@representative.num_bills_passed.to_s}/#{@representative.bills.size.to_s} (#{number_to_percentage(@representative.num_bills_passed.to_f/@representative.bills.size.to_f*100, :precision => 1)})" %><br>
+<% for bill in @representative.bills %>
+<%= link_to bill.name, :controller => 'admin', :action => 'show', :id => bill %><% if bill.passed then %> (Passed) <% end %><br>
+<% end %>
+<br />
+<% end %>
+
+<% if @representative.cosponsored_bills.size > 0 %>
+Cosponsored Bills: <%= "#{@representative.num_cosponsored_passed.to_s}/#{@representative.cosponsored_bills.size.to_s} (#{number_to_percentage(@representative.num_cosponsored_passed.to_f/@representative.cosponsored_bills.size.to_f*100, :precision => 1)})" %><br>
+<% for bill in @representative.cosponsored_bills %>
+<%= link_to bill.name, :controller => 'admin', :action => 'show', :id => bill %><% if bill.passed then %> (Passed) <% end %><br>
+<% end %>
+<br />
+<% end %>
+
+<%= link_to 'Back', :action => 'list' %>

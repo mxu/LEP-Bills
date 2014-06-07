@@ -1,0 +1,22 @@
+<h1>Bills</h1>
+<p>order by: <%= link_to 'most events', :action => 'list', :order => 'events' %><br />
+<br />
+<% for bill in @bills %>
+  (<%= link_to bill.name, :action => 'show', :id => bill %>) [<%= bill.events.size %> events] <%=h truncate(bill.title, 150) %><br />
+<% end %>
+
+<br />
+
+<%= pagination_links @bill_pages, :window_size => 3 %>
+
+<br />
+
+<%= link_to 'Fetch bills', :action => 'fetch', :method => :post %>
+
+<%= link_to 'Fetch roll calls', :action => 'fetch_rc', :method => :post %>
+
+<%= link_to 'Parse all bill events', :action => 'parse_all_bills', :method => :post %>
+
+<%= link_to 'Parse (and fetch) all amendments', :action => 'parse_amendments', :method => :post %>
+
+<%= link_to 'Clear all data', { :action => 'delete_all' }, :confirm => 'Are you sure?', :method => :post %>

@@ -1,0 +1,16 @@
+<%= error_messages_for 'rep' %>
+
+<!--[form:show_rep]-->
+<% if rep.bills.size > 0 %>
+Sponsored Bills: <%= "#{rep.num_bills_passed.to_s}/#{rep.bills.size.to_s} (#{number_to_percentage(rep.num_bills_passed.to_f/rep.bills.size.to_f*100, :precision => 1)})" %><br>
+<% for bill in rep.bills %>
+<%= link_to bill.name, :action => 'show', :id => bill %><% if bill.passed then %> (Passed) <% end %><br>
+<% end %>
+<% end %>
+<% if rep.cosponsored_bills.size > 0 %>
+Cosponsored Bills: <%= "#{rep.num_cosponsored_passed.to_s}/#{rep.cosponsored_bills.size.to_s} (#{number_to_percentage(rep.num_cosponsored_passed.to_f/rep.cosponsored_bills.size.to_f*100, :precision => 1)})" %><br>
+<% for bill in rep.cosponsored_bills %>
+<%= link_to bill.name, :action => 'show', :id => bill %><% if bill.passed then %> (Passed) <% end %><br>
+<% end %>
+<% end %>
+<!--[eoform:show_rep]-->

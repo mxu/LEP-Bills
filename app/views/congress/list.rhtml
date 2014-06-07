@@ -1,0 +1,40 @@
+<h1>Congresses</h1>
+<% form_tag '../report/generate' do -%>
+<table border="0" cellspacing="5" cellpadding="5">
+  <% for congress in @congresses -%>
+  <tr>
+    <td><%= check_box 'checkbox', congress.id %> <%= congress.number %></td>
+    <td><%= congress.bills.size %> bills</td>
+    <td><%= congress.amendments.size %> amendments <%= link_to "(fetch)", :action => "fetch_amendments", :id => congress.id %></td>
+    <td><%= congress.unimportant_bills.size %>/<%= congress.regular_bills.size %>/<%= congress.important_bills.size %> - <%= link_to "Rank importance", :action => "rank_one", :id => congress.id %></td>
+    <td><%= link_to "Parse events", :action => "parse_congress", :id => congress.id %></td>
+    <td><%= congress.representatives.size %>/<%= congress.committees.size %>/<%= congress.subcommittees.size %> <%= link_to "Link", :action => "link_congress", :id => congress.id %></td>
+  </tr>
+  <% end -%>
+  <tr>
+    <td>All</td>
+    <td><%= Bill.find(:all).size %> bills</td>
+    <td><%= Amendment.find(:all).size %> amendments</td>
+    <td><%= link_to "Rank importance", :action => "rank_all" %></td>
+    <td><%= link_to "Parse all events", :action => "parse_all" %></td>
+  </tr>
+</table>
+<!--Importance: <%= text_field_tag :spec_i, '', :size => 2 %><br />
+Batch #: <%= text_field_tag :spec_b, '', :size => 2 %><br />-->
+<%= check_box 'report', 'bills' %> Bills</ br>
+<%= check_box 'report', 'amendments' %> Amendments</ br>
+<%= check_box 'report', 'reps' %> Reps</ br>
+<%= check_box 'report', 'reps_subcomm' %> Reps-Subcommittees</ br>
+<%= check_box 'report', 'reps_referrals' %> Reps-Referrals</ br>
+<%= check_box 'report', 'reps_issues' %> Reps-Issues</ br>
+<%= check_box 'report', 'reps_bills' %> Reps-Bills</ br>
+<%= submit_tag("Generate reports") %>
+<% end -%>
+<h2>Import new congress</h2>
+<% form_tag '/congress/fetch_multiple' do -%>
+Start: <%= text_field_tag :first, 1, :size => 5 %>
+End: <%= text_field_tag :last, 5000, :size => 5 %>
+Congress: <%= text_field_tag :congress, 105, :size => 3 %>
+Congress End: <%= text_field_tag :congress_end, 105, :size => 3 %>
+<%= submit_tag("Import") %>
+<% end -%>

@@ -1,0 +1,68 @@
+<p>
+  <b>Name:</b> <%= @bill.name %> <%= "<i>(Passed)</i>" if @bill.passed %>
+</p>
+<p>
+  <b>Title:</b> <%= @bill.title %>
+</p>
+<p>
+  <b>Introduced On:</b> <%= @bill.introduced_on %><br />
+  <b>Referred to Committee on:</b> <%= @bill.referred_to_committee_on %><br />
+  <b>Committee hearing held on:</b> <%= @bill.committee_hearing_held_on %><br />
+  <b>Committee markup held on:</b> <%= @bill.committee_markup_held_on %><br />
+  <b>Referred to Subcommittee on:</b> <%= @bill.referred_to_subcommittee_on %><br />
+  <b>Subcommittee hearing held on:</b> <%= @bill.subcommittee_hearing_held_on %><br />
+  <b>Subcommittee markup held on:</b> <%= @bill.subcommittee_markup_held_on %><br />
+  <b>Presented to President on:</b> <%= @bill.presented_to_president_on %><br />
+  <b>Vetoed by President on:</b> <%= @bill.vetoed_by_president_on %><br />
+  <b>Signed by President on:</b> <%= @bill.signed_by_president_on %><br />
+  <b>Placed on the Union Calendar on:</b> <%= @bill.placed_on_union_calendar_on %><br />
+  <b>Placed on the House Calendar on:</b> <%= @bill.placed_on_house_calendar_on %><br />
+  <b>Placed on the Corrections Calendar on:</b> <%= @bill.placed_on_corrections_calendar_on %><br />
+  <b>Placed on the Private Calendar on:</b> <%= @bill.placed_on_private_calendar_on %><br />
+  <b>Placed on the Discharge Calendar on:</b> <%= @bill.placed_on_discharge_calendar_on %><br />
+  <b>Passed House on:</b> <%= @bill.passed_house_on %><br />
+  <b>Passed Senate on:</b> <%= @bill.passed_senate_on %><br />
+  <b>Rules committee reported on:</b> <%= @bill.rule_reported_on %><br />
+  <b>Rules passed on:</b> <%= @bill.rule_passed_on %><br />
+  <b>Sent to conference committee on:</b> <%= @bill.sent_to_conference_committee_on %><br />
+  <b>Conference committee report issued on:</b> <%= @bill.conference_committee_report_issued_on %><br />
+  <b>Conference committee report passed House on:</b> <%= @bill.conference_committee_passed_house_on %><br />
+  <b>Conference committee report passed Senate on:</b> <%= @bill.conference_committee_passed_senate_on %><br />
+</p>
+<p><% unless @bill.sponsors.empty? %>
+  <b>Sponsor:</b> <%= link_to_remote @bill.sponsors.first.name,
+  :url => {:controller => :admin, :action => :show_rep, :id => @bill.sponsors.first.id},
+  :update => "rep#{@bill.sponsors.first.id}", :loading => "Element.toggle('rep#{@bill.sponsors.first.id}')",
+  :complete => visual_effect(:highlight, "rep#{@bill.sponsors.first.id}", :duration => 1.5) %>
+  <% content_tag :div, :id => "rep#{@bill.sponsors.first.id}", :style => "display:none;" do -%>Loading<% end -%> <% end %>
+</p>
+<% if @bill.cosponsors.size > 0 %>
+<p>
+  <b><%= link_to_function "Cosponsors", "Element.toggle('cosponsors')" %> (<%= @bill.cosponsors.size %>):</b> <br>
+  <% content_tag :div, :id => "cosponsors", :style => "display:none;" do -%>
+    <% for cosponsor in @bill.cosponsors %>
+      <%= link_to_remote "#{cosponsor.name}",
+      :url => {:controller => :admin, :action => :show_rep, :id => cosponsor.id},
+      :update => "rep#{cosponsor.id}", :loading => "Element.toggle('rep#{cosponsor.id}')",
+      :complete => visual_effect(:highlight, "rep#{cosponsor.id}", :duration => 1.5) %><br>
+      <% content_tag :div, :id => "rep#{cosponsor.id}", :style => "display:none;" do -%>Loading<% end -%>
+    <% end %>
+  <% end -%>
+</p>
+<% end %>
+<% if @bill.events.size > 0 %>
+<p>
+  <b><%= link_to_function "Events", "Element.toggle('events')" %> (<%= @bill.events.size %>):</b><br>
+  <% content_tag :div, "", :id => "events", :style => "display:none;" do -%>
+    <% for event in @bill.events %>
+      <%= event.date %>: <%= event.title %><%= if event.roll_call then link_to_remote event.roll_call.roll_number,
+                                                                          :url => {:controller => :admin, :action => :show_roll_call, :id => event.roll_call},
+                                                                          :update => "roll_call", :loading => "Element.replace_html('roll_call', 'Loading')",
+                                                                          :complete => visual_effect(:highlight, "roll_call", :duration => 1.5) end %><br>
+    <% end %>
+  <% end -%>
+</p>
+<% end %>
+<% content_tag :div, :id => "roll_call" do -%><% end -%>
+<%= link_to 'Parse bill events', :action => 'parse_bill', :id => @bill %>
+<%= link_to 'Back', :action => 'list' %>
