@@ -25,6 +25,7 @@ class CongressController < ApplicationController
       roll_commands(congress)
     end
     flash[:notice] = "#{last-first+1} bills from each of the #{params[:congress].to_i.ordinalize}-#{params[:congress].to_i.ordinalize} were fetched and processed. Started "+start.to_s+"; finished "+Time.now.to_s
+    puts "#{last-first+1} bills from each of the #{params[:congress].to_i.ordinalize}-#{params[:congress].to_i.ordinalize} were fetched and processed. Started "+start.to_s+"; finished "+Time.now.to_s
     redirect_to :action=>'index'
   end
   
@@ -155,7 +156,7 @@ class CongressController < ApplicationController
     congress.subcommittees.clear
     Subcommittee.find(:all).each {|subcommittee| congress.subcommittees << subcommittee if subcommittee.bills.any? {|bill| bill.congress_id == congress.id } }
     congress.save
-    redirect_to :action => "index"
+    # redirect_to :action => "index"
   end
   
   public
@@ -173,7 +174,8 @@ class CongressController < ApplicationController
     end
     amendments.each { |amendment| fetch_amendment(congress, amendment) }
     flash[:notice] = "#{amendments.size} amendments from the #{congress.number.ordinalize} were fetched"
-    redirect_to :action => "index"
+    puts "#{amendments.size} amendments from the #{congress.number.ordinalize} were fetched"
+    # redirect_to :action => "index"
   end
   
   private
@@ -187,18 +189,27 @@ class CongressController < ApplicationController
     puts "amendment #: #{name}"#"stuff: #{array[29].scan(/\./)}"
     amendment = Amendment.find_or_create_by_name_and_congress_id(name, congress.id)
     amendment.congress = congress
-    amendment.bill = Bill.find_by_name_and_congress_id(response.body.scan(/<br>Amends: <a href=.+>H\.R\.(\d+)<\/a>/).flatten.to_s, congress.id)
+
+    bill_str = response.body.scan(/>Amends: <a href=.+>H\.R\.(\d+)<\/a>/).flatten.to_s
+    puts "amends bill #{bill_str} for congress #{congress.fnumber}"
+    amendment.bill = Bill.find_by_name_and_congress_id(bill_str, congress.id)
     amendment.offered_on = response.body.scan(/offered (\d+\/\d+\/\d+)/).to_s
-    amendment.description = response.body.scan(/<p>AMENDMENT DESCRIPTION:<br>(.+)\n<p>/).flatten.to_s
-    amendment.purpose = response.body.scan(/<p>AMENDMENT PURPOSE:<br>(.+)\n<p>/).flatten.to_s
+    amendment.description = response.body.scan(/<p>AMENDMENT DESCRIPTION:<br \/>(.+)\n<p>/).flatten.to_s
+    amendment.purpose = response.body.scan(/<p>AMENDMENT PURPOSE:<br \/>(.+)\n<p>/).flatten.to_s
     amendment.passed = false
     amendment.passed = true if response.body =~ /On agreeing to .+ Agreed to/ or response.body =~ /Amendment Passed/
-    name = response.body.scan(/<br>Sponsor: <a href=.+>(.+)<\/a>/).flatten.to_s
-    if name =~ /Rep/ then
-      amendment.sponsor = Representative.locate(name)
-    elsif
-      amendment.sponsor = Committee.find_by_name(name.sub(/House /, ""))
+    
+    sponsors = response.body.scan(/>Rep (.+)<\/a> \[(..)-?(\d{0,2})\]\n/)
+    sponsors.each do |sponsor|
+      rep = Representative.locate(sponsor[0])
+      if rep.state.nil? or rep.district.nil? then
+        rep.state = sponsor[1]
+        rep.district = sponsor[2]
+        rep.save
+      end
+      amendment.sponsor = rep
     end
+
     amendment.save
   end
   
@@ -262,12 +273,12 @@ class CongressController < ApplicationController
   public
   def parse_congress
     Congress.find(params[:id]).bills.each { |bill| parse_bill(bill) }
-    redirect_to :action => "index"
+    # redirect_to :action => "index"
   end
   
   def parse_all
     Bill.find(:all).each { |bill| parse_bill(bill) }
-    redirect_to :action => "index"    
+    # redirect_to :action => "index"    
   end
   
   private
@@ -321,5 +332,5 @@ class CongressController < ApplicationController
     bill.save
   end
 
-  
+
 end

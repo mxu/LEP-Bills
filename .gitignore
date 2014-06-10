@@ -2,3 +2,4 @@
 log/
 Reports/
 *.zip
+.ruby-version
