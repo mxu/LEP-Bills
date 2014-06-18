@@ -3,3 +3,4 @@ log/
 Reports/
 *.zip
 .ruby-version
+util.py

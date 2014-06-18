@@ -55,7 +55,7 @@ class CongressController < ApplicationController
     # http://thomas.loc.gov/cgi-bin/bdquery/D?d104:2:./list/bss/d104HR.lst:@@@S
     url = URI.parse("http://thomas.loc.gov/cgi-bin/bdquery/D?d#{congress.fnumber}:#{bill_number}:./list/bss/d#{congress.fnumber}HR.lst:@@@S") # first we parse the URL
 		puts "Trying to find bill #{bill_number.to_s} in congress #{congress.number.to_s}..." #to examine progress.
-  	response = Net::HTTP.get_response(url) # then we fetch the page
+    response = get_http_response(url) # then we fetch the page
 		tmp = response.body.scan(/H\.R\.(\d+)/)
 		return if tmp.nil? or tmp.first.nil?
 		name = tmp.first.first
@@ -79,7 +79,7 @@ class CongressController < ApplicationController
 		# cosponsors
 		if response.body.scan(/Cosponsors<\/a> \(\d+\)/)
 			url.query[-1] = 'P'
-			cosponsor_response = Net::HTTP.get_response(url) # fetch cosponsor page
+			cosponsor_response = get_http_response(url) # fetch cosponsor page
 			cosponsors = cosponsor_response.body.scan(/>Rep (.+)<\/a> \[(..)-?(\d{0,2})\]\n - \d+\/\d+\/\d+[\n<]/)
 			cosponsors.each do |cosponsor|
 			  rep = Representative.locate(cosponsor[0])
@@ -95,7 +95,7 @@ class CongressController < ApplicationController
 		# committees and subcommittees
     begin
       url.query[-1] = 'C'
-      committee_response = Net::HTTP.get_response(url)
+      committee_response = get_http_response(url)
       committees = committee_response.body.scan(/>House +(.+)<\/a>/)
       subcommittees = committee_response.body.scan(/>Subcommittee on +(.+)<\/a>/)
       bill.committees.clear
@@ -129,7 +129,7 @@ class CongressController < ApplicationController
     Bill.find(:all).each do |bill|
       begin
         url = URI.parse("http://thomas.loc.gov/cgi-bin/bdquery/D?d#{bill.congress.fnumber}:#{bill.name}:./list/bss/d#{bill.congress.fnumber}HR.lst:@@@C")
-        committee_response = Net::HTTP.get_response(url)
+        committee_response = get_http_response(url)
         committees = committee_response.body.scan(/>House +(.+)<\/a>\s*<\/td>/)
         subcommittees = committee_response.body.scan(/>Subcommittee on +(.+)<\/a>\s*<\/td>/)
         bill.committees.clear
@@ -143,6 +143,25 @@ class CongressController < ApplicationController
     redirect_to :action => "index"
   end
   
+  def get_http_response(url)
+    # try up to 5 times
+    success = false
+    attempt = 0
+    response = nil
+    while success == false && attempt < 5 do
+      attempt = attempt + 1
+      begin
+        response = Net::HTTP.get_response(url) # then we fetch the page
+      rescue StandardError
+        puts "Error loading #{url} (attempt #{attempt}/5)"
+      end
+    end
+    if response.nil?
+      puts "Failed to load #{url}"
+    end
+    return response
+  end
+
   def link_congress
     link_congress_for(Congress.find(params[:id]))
   end
@@ -183,7 +202,7 @@ class CongressController < ApplicationController
   #Gets a single amendment from Thomas
   def fetch_amendment(congress, amendment_number)
     url = URI.parse("http://thomas.loc.gov/cgi-bin/bdquery/z?d#{congress.fnumber}:HZ#{amendment_number}:") # first we parse the URL
-    response = Net::HTTP.get_response(url) # then we fetch the page
+    response = get_http_response(url) # then we fetch the page
     #array = response.body.to_a # here we store in an array each line of the body of the page
     name = response.body.scan(/H\.AMDT\.(\d+)/).first.first
     puts "amendment #: #{name}"#"stuff: #{array[29].scan(/\./)}"
