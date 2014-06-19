@@ -2,6 +2,7 @@
 
 class ReportController < ApplicationController
   require 'zip/zip'
+  require 'thread'
     
   private
   

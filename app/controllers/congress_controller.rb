@@ -2,6 +2,8 @@
 # storing it in the database.
 
 class CongressController < ApplicationController
+  require 'thread'
+
   layout 'default'
 
   def index
@@ -54,9 +56,22 @@ class CongressController < ApplicationController
   def fetch_bill(congress, bill_number)
     # http://thomas.loc.gov/cgi-bin/bdquery/D?d104:2:./list/bss/d104HR.lst:@@@S
     url = URI.parse("http://thomas.loc.gov/cgi-bin/bdquery/D?d#{congress.fnumber}:#{bill_number}:./list/bss/d#{congress.fnumber}HR.lst:@@@S") # first we parse the URL
-		puts "Trying to find bill #{bill_number.to_s} in congress #{congress.number.to_s}..." #to examine progress.
-    response = get_http_response(url) # then we fetch the page
-		tmp = response.body.scan(/H\.R\.(\d+)/)
+    urlP = URI.parse("http://thomas.loc.gov/cgi-bin/bdquery/D?d#{congress.fnumber}:#{bill_number}:./list/bss/d#{congress.fnumber}HR.lst:@@@P")
+    urlC = URI.parse("http://thomas.loc.gov/cgi-bin/bdquery/D?d#{congress.fnumber}:#{bill_number}:./list/bss/d#{congress.fnumber}HR.lst:@@@C")
+    puts "Trying to find bill #{bill_number.to_s} in congress #{congress.number.to_s}..." #to examine progress.
+    # response = get_http_response(url) # then we fetch the page
+		
+    response = nil
+    cosponsor_response = nil
+    committee_response = nil
+
+    threads = []
+    threads << Thread.new { response = get_http_response(url) }
+    threads << Thread.new { cosponsor_response = get_http_response(urlP) }
+    threads << Thread.new { committee_response = get_http_response(urlC) }
+    threads.each(&:join) # this waits for all the threads to finish before proceeding
+
+    tmp = response.body.scan(/H\.R\.(\d+)/)
 		return if tmp.nil? or tmp.first.nil?
 		name = tmp.first.first
 		bill = Bill.find_or_create_by_name_and_congress_id(name, congress.id)
@@ -77,9 +92,10 @@ class CongressController < ApplicationController
     end
     
 		# cosponsors
-		if response.body.scan(/Cosponsors<\/a> \(\d+\)/)
-			url.query[-1] = 'P'
-			cosponsor_response = get_http_response(url) # fetch cosponsor page
+		# if response.body.scan(/Cosponsors<\/a> \(\d+\)/)
+		begin
+    	# url.query[-1] = 'P'
+			# cosponsor_response = get_http_response(url) # fetch cosponsor page
 			cosponsors = cosponsor_response.body.scan(/>Rep (.+)<\/a> \[(..)-?(\d{0,2})\]\n - \d+\/\d+\/\d+[\n<]/)
 			cosponsors.each do |cosponsor|
 			  rep = Representative.locate(cosponsor[0])
@@ -94,8 +110,8 @@ class CongressController < ApplicationController
 		
 		# committees and subcommittees
     begin
-      url.query[-1] = 'C'
-      committee_response = get_http_response(url)
+      # url.query[-1] = 'C'
+      # committee_response = get_http_response(url)
       committees = committee_response.body.scan(/>House +(.+)<\/a>/)
       subcommittees = committee_response.body.scan(/>Subcommittee on +(.+)<\/a>/)
       bill.committees.clear
@@ -152,14 +168,18 @@ class CongressController < ApplicationController
       attempt = attempt + 1
       begin
         response = Net::HTTP.get_response(url) # then we fetch the page
+        success = true
+        puts "Success loading #{url}"
       rescue StandardError
         puts "Error loading #{url} (attempt #{attempt}/5)"
       end
     end
     if response.nil?
       puts "Failed to load #{url}"
+      return ""
+    else
+      return response
     end
-    return response
   end
 
   def link_congress
