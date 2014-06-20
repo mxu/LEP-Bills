@@ -2,7 +2,6 @@
 
 class ReportController < ApplicationController
   require 'zip/zip'
-  require 'thread'
     
   private
   
@@ -24,7 +23,8 @@ class ReportController < ApplicationController
   
   # Instead, we'll just write the reports directly onto the file system. Since the zip
   # method was doint this anyway and then asking you to download it, this should be faster.
-  def write_report(data, subfolder,category)
+  def write_report(data, subfolder, category)
+    puts "writing reports for #{category}"
     count = 0
     Dir.chdir("Reports")
     

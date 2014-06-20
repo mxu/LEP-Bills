@@ -46,41 +46,49 @@ class CongressController < ApplicationController
   
   # Runs all of the basic commands for a congress, for convenience
   def roll_commands(congress)
+    puts "Fetching amendments..."
     fetch_amendments_for(congress)
+    puts "Ranking importance..."
     rank_congress(congress)
+    puts "Parsing bills..."
     congress.bills.each { |bill| parse_bill(bill) }
+    puts "Linking congresses..."
     link_congress_for(congress)
   end
   
   # Gets a single bill from Thomas
   def fetch_bill(congress, bill_number)
-    # http://thomas.loc.gov/cgi-bin/bdquery/D?d104:2:./list/bss/d104HR.lst:@@@S
-    url = URI.parse("http://thomas.loc.gov/cgi-bin/bdquery/D?d#{congress.fnumber}:#{bill_number}:./list/bss/d#{congress.fnumber}HR.lst:@@@S") # first we parse the URL
+    puts "Fetching bill #{bill_number.to_s} in congress #{congress.number.to_s}..." #to examine progress.
+    
+    # request each of the pages in parallel
+    # events page
+    urlS = URI.parse("http://thomas.loc.gov/cgi-bin/bdquery/D?d#{congress.fnumber}:#{bill_number}:./list/bss/d#{congress.fnumber}HR.lst:@@@S")
+    events_response = nil
+    # cosponsor page
     urlP = URI.parse("http://thomas.loc.gov/cgi-bin/bdquery/D?d#{congress.fnumber}:#{bill_number}:./list/bss/d#{congress.fnumber}HR.lst:@@@P")
-    urlC = URI.parse("http://thomas.loc.gov/cgi-bin/bdquery/D?d#{congress.fnumber}:#{bill_number}:./list/bss/d#{congress.fnumber}HR.lst:@@@C")
-    puts "Trying to find bill #{bill_number.to_s} in congress #{congress.number.to_s}..." #to examine progress.
-    # response = get_http_response(url) # then we fetch the page
-		
-    response = nil
     cosponsor_response = nil
+    # committee page
+    urlC = URI.parse("http://thomas.loc.gov/cgi-bin/bdquery/D?d#{congress.fnumber}:#{bill_number}:./list/bss/d#{congress.fnumber}HR.lst:@@@C")
     committee_response = nil
-
+    
     threads = []
     threads << Thread.new { response = get_http_response(url) }
     threads << Thread.new { cosponsor_response = get_http_response(urlP) }
     threads << Thread.new { committee_response = get_http_response(urlC) }
-    threads.each(&:join) # this waits for all the threads to finish before proceeding
+    # wait for all the threads to finish before proceeding
+    threads.each(&:join)
 
-    tmp = response.body.scan(/H\.R\.(\d+)/)
+    # parse the bill heading
+    tmp = events_response.body.scan(/H\.R\.(\d+)/)
 		return if tmp.nil? or tmp.first.nil?
 		name = tmp.first.first
 		bill = Bill.find_or_create_by_name_and_congress_id(name, congress.id)
 		bill.congress = congress
-		bill.title = response.body.scan(/Title:<\/[Bb]> (.+)\n/).first.first
-		bill.introduced_on = response.body.scan(/\(introduced (\d+\/\d+\/\d+)\)/).first.first
+		bill.title = events_response.body.scan(/Title:<\/[Bb]> (.+)\n/).first.first
+		bill.introduced_on = events_response.body.scan(/\(introduced (\d+\/\d+\/\d+)\)/).first.first
 		
 		# sponsors
-		sponsors = response.body.scan(/>Rep (.+)<\/a> \[(..)-?(\d{0,2})\]\n/)
+		sponsors = events_response.body.scan(/>Rep (.+)<\/a> \[(..)-?(\d{0,2})\]\n/)
 		sponsors.each do |sponsor|
 		  rep = Representative.locate(sponsor[0])
 		  if rep.state.nil? or rep.district.nil? then
@@ -92,10 +100,7 @@ class CongressController < ApplicationController
     end
     
 		# cosponsors
-		# if response.body.scan(/Cosponsors<\/a> \(\d+\)/)
 		begin
-    	# url.query[-1] = 'P'
-			# cosponsor_response = get_http_response(url) # fetch cosponsor page
 			cosponsors = cosponsor_response.body.scan(/>Rep (.+)<\/a> \[(..)-?(\d{0,2})\]\n - \d+\/\d+\/\d+[\n<]/)
 			cosponsors.each do |cosponsor|
 			  rep = Representative.locate(cosponsor[0])
@@ -110,8 +115,6 @@ class CongressController < ApplicationController
 		
 		# committees and subcommittees
     begin
-      # url.query[-1] = 'C'
-      # committee_response = get_http_response(url)
       committees = committee_response.body.scan(/>House +(.+)<\/a>/)
       subcommittees = committee_response.body.scan(/>Subcommittee on +(.+)<\/a>/)
       bill.committees.clear
@@ -230,7 +233,6 @@ class CongressController < ApplicationController
     amendment.congress = congress
 
     bill_str = response.body.scan(/>Amends: <a href=.+>H\.R\.(\d+)<\/a>/).flatten.to_s
-    puts "amends bill #{bill_str} for congress #{congress.fnumber}"
     amendment.bill = Bill.find_by_name_and_congress_id(bill_str, congress.id)
     amendment.offered_on = response.body.scan(/offered (\d+\/\d+\/\d+)/).to_s
     amendment.description = response.body.scan(/<p>AMENDMENT DESCRIPTION:<br \/>(.+)\n<p>/).flatten.to_s
