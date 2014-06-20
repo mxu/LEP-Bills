@@ -48,39 +48,44 @@ class CongressController < ApplicationController
   def roll_commands(congress)
     fetch_amendments_for(congress)
     rank_congress(congress)
+    puts "Parsing bills for #{congress.number}"
     congress.bills.each { |bill| parse_bill(bill) }
     link_congress_for(congress)
   end
   
   # Gets a single bill from Thomas
   def fetch_bill(congress, bill_number)
-    # http://thomas.loc.gov/cgi-bin/bdquery/D?d104:2:./list/bss/d104HR.lst:@@@S
-    url = URI.parse("http://thomas.loc.gov/cgi-bin/bdquery/D?d#{congress.fnumber}:#{bill_number}:./list/bss/d#{congress.fnumber}HR.lst:@@@S") # first we parse the URL
+    puts "Fetching bill #{bill_number.to_s} in congress #{congress.number.to_s}..." #to examine progress.
+    
+    # request each of the pages in parallel
+    # events page
+    urlS = URI.parse("http://thomas.loc.gov/cgi-bin/bdquery/D?d#{congress.fnumber}:#{bill_number}:./list/bss/d#{congress.fnumber}HR.lst:@@@S")
+    events_response = nil
+    # cosponsor page
     urlP = URI.parse("http://thomas.loc.gov/cgi-bin/bdquery/D?d#{congress.fnumber}:#{bill_number}:./list/bss/d#{congress.fnumber}HR.lst:@@@P")
-    urlC = URI.parse("http://thomas.loc.gov/cgi-bin/bdquery/D?d#{congress.fnumber}:#{bill_number}:./list/bss/d#{congress.fnumber}HR.lst:@@@C")
-    puts "Trying to find bill #{bill_number.to_s} in congress #{congress.number.to_s}..." #to examine progress.
-    # response = get_http_response(url) # then we fetch the page
-		
-    response = nil
     cosponsor_response = nil
+    # committee page
+    urlC = URI.parse("http://thomas.loc.gov/cgi-bin/bdquery/D?d#{congress.fnumber}:#{bill_number}:./list/bss/d#{congress.fnumber}HR.lst:@@@C")
     committee_response = nil
-
+    
     threads = []
     threads << Thread.new { response = get_http_response(url) }
     threads << Thread.new { cosponsor_response = get_http_response(urlP) }
     threads << Thread.new { committee_response = get_http_response(urlC) }
-    threads.each(&:join) # this waits for all the threads to finish before proceeding
+    # wait for all the threads to finish before proceeding
+    threads.each(&:join)
 
-    tmp = response.body.scan(/H\.R\.(\d+)/)
+    # parse the bill heading
+    tmp = events_response.body.scan(/H\.R\.(\d+)/)
 		return if tmp.nil? or tmp.first.nil?
 		name = tmp.first.first
 		bill = Bill.find_or_create_by_name_and_congress_id(name, congress.id)
 		bill.congress = congress
-		bill.title = response.body.scan(/Title:<\/[Bb]> (.+)\n/).first.first
-		bill.introduced_on = response.body.scan(/\(introduced (\d+\/\d+\/\d+)\)/).first.first
+		bill.title = events_response.body.scan(/Title:<\/[Bb]> (.+)\n/).first.first
+		bill.introduced_on = events_response.body.scan(/\(introduced (\d+\/\d+\/\d+)\)/).first.first
 		
 		# sponsors
-		sponsors = response.body.scan(/>Rep (.+)<\/a> \[(..)-?(\d{0,2})\]\n/)
+		sponsors = events_response.body.scan(/>Rep (.+)<\/a> \[(..)-?(\d{0,2})\]\n/)
 		sponsors.each do |sponsor|
 		  rep = Representative.locate(sponsor[0])
 		  if rep.state.nil? or rep.district.nil? then
@@ -92,10 +97,7 @@ class CongressController < ApplicationController
     end
     
 		# cosponsors
-		# if response.body.scan(/Cosponsors<\/a> \(\d+\)/)
 		begin
-    	# url.query[-1] = 'P'
-			# cosponsor_response = get_http_response(url) # fetch cosponsor page
 			cosponsors = cosponsor_response.body.scan(/>Rep (.+)<\/a> \[(..)-?(\d{0,2})\]\n - \d+\/\d+\/\d+[\n<]/)
 			cosponsors.each do |cosponsor|
 			  rep = Representative.locate(cosponsor[0])
@@ -110,8 +112,6 @@ class CongressController < ApplicationController
 		
 		# committees and subcommittees
     begin
-      # url.query[-1] = 'C'
-      # committee_response = get_http_response(url)
       committees = committee_response.body.scan(/>House +(.+)<\/a>/)
       subcommittees = committee_response.body.scan(/>Subcommittee on +(.+)<\/a>/)
       bill.committees.clear
@@ -188,6 +188,7 @@ class CongressController < ApplicationController
   
   # Links the bills in the specified congress to its representatives, committees, and subcommittees.
   def link_congress_for(congress)
+    puts "Linking congresses #{congress.number}..."
     congress.representatives.clear
     Representative.find(:all).each {|rep| congress.representatives << rep if Bill.find_by_sql("SELECT * FROM bills INNER JOIN bills_cosponsors ON bills.id = bills_cosponsors.bill_id WHERE (bills_cosponsors.representative_id = #{rep.id} and bills.congress_id = #{congress.id})").size > 0 or Bill.find_by_sql("SELECT * FROM bills INNER JOIN bills_sponsors ON bills.id = bills_sponsors.bill_id WHERE (bills_sponsors.representative_id = #{rep.id} and bills.congress_id = #{congress.id})").size > 0 }
     congress.committees.clear
@@ -205,6 +206,7 @@ class CongressController < ApplicationController
   
   # Gets the amendments for each bill in the congress from Thomas.
   def fetch_amendments_for(congress)
+    puts "Fetching amendments for the #{congress.number.ordinalize}..."
     events = Event.find(:all, :conditions => [ "Events.title LIKE '%H\.AMDT\.%' AND congress_id = ?", congress.id ], :include => :bill)
     amendments = []
     events.each do |event|
@@ -230,7 +232,6 @@ class CongressController < ApplicationController
     amendment.congress = congress
 
     bill_str = response.body.scan(/>Amends: <a href=.+>H\.R\.(\d+)<\/a>/).flatten.to_s
-    puts "amends bill #{bill_str} for congress #{congress.fnumber}"
     amendment.bill = Bill.find_by_name_and_congress_id(bill_str, congress.id)
     amendment.offered_on = response.body.scan(/offered (\d+\/\d+\/\d+)/).to_s
     amendment.description = response.body.scan(/<p>AMENDMENT DESCRIPTION:<br \/>(.+)\n<p>/).flatten.to_s
@@ -269,6 +270,7 @@ class CongressController < ApplicationController
   # Ranks a congress by assigning each bill its importance number (1-3) and its issue,
   # based on information in external files.
   def rank_congress(congress)
+    puts "Ranking importance for #{congress.number}"
     important = []
     if File.exists?("important/#{congress.number}_House_important.txt") then
       File.open("important/#{congress.number}_House_important.txt").to_a.each do |bill|

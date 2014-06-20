@@ -2,7 +2,6 @@
 
 class ReportController < ApplicationController
   require 'zip/zip'
-  require 'thread'
     
   private
   
@@ -24,7 +23,8 @@ class ReportController < ApplicationController
   
   # Instead, we'll just write the reports directly onto the file system. Since the zip
   # method was doint this anyway and then asking you to download it, this should be faster.
-  def write_report(data, subfolder,category)
+  def write_report(data, subfolder, category)
+    puts "writing reports for #{category}"
     count = 0
     Dir.chdir("Reports")
     
@@ -93,6 +93,7 @@ class ReportController < ApplicationController
   # Uses the file views/report/bills.rhtml to generate the csv-format output string
   # for the specified congress
   def generate_bills(congress, data)
+    puts "generating bills for #{congress.number}..."
     @representatives = congress.representatives
     @committees = congress.committees
     @subcommittees = congress.subcommittees
@@ -112,6 +113,7 @@ class ReportController < ApplicationController
   # Similarly, uses the amendment view file to generate the csv-format amendments report
   # for the specified congress
   def generate_amendments(congress, data)
+    puts "generating amendments for #{congress.number}..."
     amendments = Amendment.find(:all, :conditions => { :congress_id => congress.id }, :order => 'amendments.name', :include => :bill )
     @representatives = congress.representatives
     @committees = congress.committees
@@ -127,6 +129,7 @@ class ReportController < ApplicationController
   # Generates csv-format string for reps-bills. Maybe use a view file for this as well, for
   # consistency.
   def generate_reps_bills(congress, data)
+    puts "generating rep_bills for #{congress.number}..."
     congress_id = congress.id
     @representatives = congress.representatives.sort {|x,y| x.last_name <=> y.last_name }
     @columns = [
@@ -166,6 +169,7 @@ class ReportController < ApplicationController
   # Generates csv-format string for the representatives report
   # Future maintenance: clean/generalize for the other variations of this report (below).
   def generate_reps(congress, data)
+    puts "generating reps for #{congress.number}..."
     @columns = reps_columns
     representatives = congress.representatives.sort {|x,y| x.last_name <=> y.last_name }
     all_bills = congress.bills
@@ -233,6 +237,7 @@ class ReportController < ApplicationController
   # Do the same as the above, but organized by subcommmittee instead. Replicating the entire
   # method is almost certainly unneccesary; condense as future maintenance.
   def generate_repssubcomm(congress, data)
+    puts "generating repssubcomm for #{congress.number}..."
     @columns = reps_columns
     representatives = congress.representatives.sort {|x,y| x.last_name <=> y.last_name }
     all_bills = congress.bills
@@ -282,6 +287,7 @@ class ReportController < ApplicationController
   
   # Same, but based on singly-referred vs. multiply-referred bills. Again, this can hopefully be condensed.
   def generate_repsreferrals(congress, data)
+    puts "generating respreferrals for #{congress.number}..."
     @columns = reps_columns_args("Single Referral", "Multiple Referral")
     representatives = congress.representatives.sort {|x,y| x.last_name <=> y.last_name }
     all_bills = congress.bills
@@ -331,6 +337,7 @@ class ReportController < ApplicationController
   
   # Finally, this does the same as the above, but sorted by the bill's issue. Same maintenance suggestion.
   def generate_repsissues(congress, data)
+    puts "generating repsissues for #{congress.number}..."
     @columns = reps_columns
     representatives = congress.representatives.sort {|x,y| x.last_name <=> y.last_name }
     all_bills = congress.bills
