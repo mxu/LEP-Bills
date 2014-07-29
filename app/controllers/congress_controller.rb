@@ -69,7 +69,7 @@ class CongressController < ApplicationController
     committee_response = nil
     
     threads = []
-    threads << Thread.new { response = get_http_response(url) }
+    threads << Thread.new { events_response = get_http_response(urlS) }
     threads << Thread.new { cosponsor_response = get_http_response(urlP) }
     threads << Thread.new { committee_response = get_http_response(urlC) }
     # wait for all the threads to finish before proceeding
