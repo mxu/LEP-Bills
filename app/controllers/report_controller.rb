@@ -343,18 +343,22 @@ class ReportController < ApplicationController
     all_bills = congress.bills
     1.upto(3) do |importance|
       bills_importance = all_bills.reject { |b| b.importance != importance }
+      puts "#{bills_importance.size} imp=#{importance} bills"
       File.open("issues/names.txt").to_a.each do |issue|
         bills = Array.new(bills_importance)
         bills.reject! { |b| b.issue != (issue.chomp) }
+        puts "#{bills.size} bills for #{issue.chomp}"
         amended_bills = bills.reject { |b| b.amendments.size == 0 }
         @data = []
         representatives.each do |rep|
           rep_data = []
           rep_data << "#{rep.last_name}, #{rep.first_name}"
+          puts "#{rep.last_name}, #{rep.first_name}"
           rep_sponsored_bills = bills.reject { |b| !b.sponsors.include? rep }
           rep_sponsored_bills_unamended = rep_sponsored_bills.reject { |b| b.amendments.any? { |a| a.passed == true } }
           rep_cosponsored_bills = bills.reject { |b| !b.cosponsors.include? rep }
           rep_cosponsored_bills_unamended = rep_cosponsored_bills.reject { |b| b.amendments.any? { |a| a.passed == true } }
+          # puts "#{rep_sponsored_bills.size}, #{rep_sponsored_bills_unamended.size}, #{rep_cosponsored_bills.size}, #{rep_cosponsored_bills_unamended.size}"
           rep_items(rep_data, rep_sponsored_bills)
           rep_items(rep_data, rep_sponsored_bills_unamended)
           rep_items(rep_data, rep_cosponsored_bills)
@@ -365,6 +369,7 @@ class ReportController < ApplicationController
           amendment_bills_passed = []
           amended_bills.each { |b| amendment_bills << b if b.amendments.any? { |a| a.sponsor_type == "Representative" and a.sponsor_id == rep.id } }
           amended_bills.each { |b| amendment_bills_passed << b if b.amendments.any? { |a| a.sponsor_type == "Representative" and a.sponsor_id == rep.id and a.passed == true } }
+          # puts "#{amendment_bills.size}, #{amendment_bills_passed.size}"
           rep_items(rep_data, amendment_bills)
           rep_items(rep_data, amendment_bills_passed)
           rep_data << amendment_bills.size

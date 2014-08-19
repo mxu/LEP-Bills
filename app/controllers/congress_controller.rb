@@ -46,10 +46,13 @@ class CongressController < ApplicationController
   
   # Runs all of the basic commands for a congress, for convenience
   def roll_commands(congress)
+    puts "Fetching amendments..."
     fetch_amendments_for(congress)
+    puts "Ranking importance..."
     rank_congress(congress)
     puts "Parsing bills for #{congress.number}"
     congress.bills.each { |bill| parse_bill(bill) }
+    puts "Linking congresses..."
     link_congress_for(congress)
   end
   
@@ -276,17 +279,17 @@ class CongressController < ApplicationController
       File.open("important/#{congress.number}_House_important.txt").to_a.each do |bill|
         important << bill.chomp.to_i
       end
-      
     end
     
     issues = []
-    bill_issues = mda(39,5000)
+    bill_issues = mda(20,5000)
     if (File.exists?("issues/names.txt")) then
       File.open("issues/names.txt").to_a.each do |i|
-        issues.push(i[0...-1])
+        issues.push(i[0...-1].chomp)
       end
       j=0
       issues.each do |i|
+        i = i.chomp
         if (File.exists?("issues/#{congress.number}_House_#{i}.txt")) then
           temp_array = []
           File.open("issues/#{congress.number}_House_#{i}.txt").to_a.each do |t|
@@ -304,7 +307,7 @@ class CongressController < ApplicationController
       #exceptions.each { |exception| bill.importance = 2 if bill.title.downcase.include?(exception.downcase) } if bill.importance == 1
       #more_exceptions.each { |exception| bill.importance = 2 if bill.title.downcase =~ exception } if bill.importance == 1
       bill.importance += 1 if important.include?(bill.name)
-      for j in 0...39
+      for j in 0...20
         bill.issue = issues[j] if bill_issues[j].include?(bill.name)
       end
       bill.save
