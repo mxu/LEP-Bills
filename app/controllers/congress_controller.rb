@@ -19,11 +19,17 @@ class CongressController < ApplicationController
   # parses, and links them.
   def fetch_multiple
 	  start = Time.now
+    stopAt = 99999999
     first = params[:first].to_i
     last = params[:last].to_i
     params[:congress].to_i.upto(params[:congress_end].to_i) do |c|
       congress = Congress.find_or_create_by_number(c)
-      first.upto(last) { |bill_number| fetch_bill(congress, bill_number) }
+      first.upto(last) do |bill_number|
+        stopAt = fetch_bill(congress, bill_number)
+        if bill_number > stopAt.to_i
+          break
+        end
+      end
       roll_commands(congress)
     end
     flash[:notice] = "#{last-first+1} bills from each of the #{params[:congress].to_i.ordinalize}-#{params[:congress].to_i.ordinalize} were fetched and processed. Started "+start.to_s+"; finished "+Time.now.to_s
@@ -87,6 +93,12 @@ class CongressController < ApplicationController
 		bill.title = events_response.body.scan(/Title:<\/[Bb]> (.+)\n/).first.first
 		bill.introduced_on = events_response.body.scan(/\(introduced (\d+\/\d+\/\d+)\)/).first.first
 		
+    # parse the bill item number
+    itemNumbers = events_response.body.scan(/Item\s(\d+)\sof\s(\d+)/)
+    thisNumber = itemNumbers[0][0]
+    maxNumber = itemNumbers[0][1]
+    puts "Item Number: #{thisNumber} of #{maxNumber}"
+
 		# sponsors
 		sponsors = events_response.body.scan(/>Rep (.+)<\/a> \[(..)-?(\d{0,2})\]\n/)
 		sponsors.each do |sponsor|
@@ -137,6 +149,7 @@ class CongressController < ApplicationController
     end
     
     bill.save
+    return maxNumber
   end
   
   public
@@ -172,7 +185,7 @@ class CongressController < ApplicationController
       begin
         response = Net::HTTP.get_response(url) # then we fetch the page
         success = true
-        puts "Success loading #{url}"
+        # puts "Success loading #{url}"
       rescue StandardError
         puts "Error loading #{url} (attempt #{attempt}/5)"
       end
