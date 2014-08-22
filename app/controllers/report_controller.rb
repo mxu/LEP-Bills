@@ -353,7 +353,7 @@ class ReportController < ApplicationController
         representatives.each do |rep|
           rep_data = []
           rep_data << "#{rep.last_name}, #{rep.first_name}"
-          puts "#{rep.last_name}, #{rep.first_name}"
+          # puts "#{rep.last_name}, #{rep.first_name}"
           rep_sponsored_bills = bills.reject { |b| !b.sponsors.include? rep }
           rep_sponsored_bills_unamended = rep_sponsored_bills.reject { |b| b.amendments.any? { |a| a.passed == true } }
           rep_cosponsored_bills = bills.reject { |b| !b.cosponsors.include? rep }

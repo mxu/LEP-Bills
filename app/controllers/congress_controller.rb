@@ -19,13 +19,23 @@ class CongressController < ApplicationController
   # parses, and links them.
   def fetch_multiple
 	  start = Time.now
+    tTotal = 0
+    billsFetched = 0
     stopAt = 99999999
     first = params[:first].to_i
     last = params[:last].to_i
     params[:congress].to_i.upto(params[:congress_end].to_i) do |c|
       congress = Congress.find_or_create_by_number(c)
       first.upto(last) do |bill_number|
+        t1 = Time.now
         stopAt = fetch_bill(congress, bill_number)
+        billsFetched = billsFetched + 1
+        t2 = Time.now
+        tDelta = t2 - t1
+        tTotal = tTotal + tDelta
+        tAvg = tTotal / billsFetched
+        tRemaining = tAvg * ([stopAt.to_i, last].min - bill_number)
+        puts "Fetched in #{tDelta.round(2)}s, Avg=#{tAvg.round(2)}s, Estimated remaining=#{tRemaining.round(2)}s\n\n"
         if bill_number > stopAt.to_i
           break
         end
@@ -138,7 +148,8 @@ class CongressController < ApplicationController
     end
   
 		# events
-		events = response.body.scan(/<strong>(.+):<\/strong><dd>([[:print:]\n]+?)(?:<dt>|<\/dl>|<dl>)/) # here we scan the page for events, putting the date and event into an array
+		events = events_response.body.scan(/<strong>(.+):<\/strong><dd>([[:print:]\n]+?)(?:<dt>|<\/dl>|<dl>)/) # here we scan the page for events, putting the date and event into an array
+    puts "#{events.size} events found"
     Event.delete_all "bill_id = #{bill.id}" # delete all existing events associated with this bill as to not duplicate them
     events.each do |x|
       event = Event.new         
