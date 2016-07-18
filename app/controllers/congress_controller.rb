@@ -297,7 +297,7 @@ class CongressController < ApplicationController
   # Ranks a congress by assigning each bill its importance number (1-3) and its issue,
   # based on information in external files.
   def rank_congress(congress)
-    puts "Ranking importance for #{congress.number}"
+    puts "Ranking importance for #{congress.number} #{congress.id}"
     important = []
     if File.exists?("important/#{congress.number}_House_important.txt") then
       File.open("important/#{congress.number}_House_important.txt").to_a.each do |bill|
@@ -309,7 +309,7 @@ class CongressController < ApplicationController
     bill_issues = mda(20,5000)
     if (File.exists?("issues/names.txt")) then
       File.open("issues/names.txt").to_a.each do |i|
-        issues.push(i[0...-1].chomp)
+        issues.push(i.chomp("\n"))
       end
       j=0
       issues.each do |i|
@@ -320,22 +320,45 @@ class CongressController < ApplicationController
             temp_array.push(t.to_i)
           end
           bill_issues[j] = temp_array
+          puts "issues/#{congress.number}_House_#{i}.txt: #{bill_issues[j].length}"
+          puts "#{bill_issues[j][0]}, #{bill_issues[j][1]}, #{bill_issues[j][2]}..."
         end 
         j += 1
       end
     end
-    
+
+    ow = 0
+    n = 0
+    print("bills: ")
+    $stdout.flush
     congress.bills.each do |bill|
       bill.importance = RankingPhrase.importance(bill)#2
       #phrases.each { |phrase| bill.importance = 1 if bill.title.downcase.include?(phrase.downcase) }
       #exceptions.each { |exception| bill.importance = 2 if bill.title.downcase.include?(exception.downcase) } if bill.importance == 1
       #more_exceptions.each { |exception| bill.importance = 2 if bill.title.downcase =~ exception } if bill.importance == 1
       bill.importance += 1 if important.include?(bill.name)
-      for j in 0...20
-        bill.issue = issues[j] if bill_issues[j].include?(bill.name)
+
+      if n > 100 then
+        break
       end
+      # n = n + 1
+
+      found = 0
+      for j in 0...issues.length
+        if bill_issues[j].include?(bill.name) then
+          bill.issue = issues[j]
+          found = found + 1
+          print("#{found} ")
+          $stdout.flush
+        end
+      end
+      ow = (ow + found - 1) if found > 1
       bill.save
     end
+    print("\n")
+    $stdout.flush
+
+    puts "overwrites: #{ow}"
   end
   
   public
