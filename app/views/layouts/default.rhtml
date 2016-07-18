@@ -10,11 +10,8 @@
 </head>
 <body>
 
-<%= link_to_unless_current 'Congresses', :controller => 'congress' %> -  
-<%= link_to_unless_current 'Bills', :controller => 'admin' %> -
-<%= link_to_unless_current 'Representatives', :controller => 'representatives' %> -
-<%= link_to_unless_current 'Ranking Phrases', :controller => 'ranking_phrase' %> -
-<%= link_to_unless_current 'Reports', :controller => 'report' %>
+<%= link_to_unless_current 'House', :controller => 'congress' %> -  
+<%= link_to_unless_current 'Senate', :controller => 'senate' %>
 
 <p style="color: green"><%= flash[:notice] %></p>
 
